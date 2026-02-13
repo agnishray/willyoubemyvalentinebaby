@@ -10,32 +10,29 @@
     <style>
         body { font-family: 'Quicksand', sans-serif; background: #FFF5F7; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; overflow: hidden; }
         .handwritten { font-family: 'Dancing Script', cursive; }
-        .glass { background: rgba(255, 255, 255, 0.98); border-radius: 2.5rem; box-shadow: 0 20px 50px rgba(251, 113, 133, 0.2); border: 1px solid #FFE4E6; width: 95%; max-width: 360px; position: relative; overflow: hidden; z-index: 10; }
-
+        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: 2.5rem; box-shadow: 0 20px 50px rgba(251, 113, 133, 0.2); border: 1px solid #FFE4E6; width: 95%; max-width: 360px; position: relative; overflow: hidden; z-index: 10; }
+        .heart-bg { position: absolute; color: rgba(251, 113, 133, 0.2); animation: float 6s infinite linear; z-index: 1; }
+        @keyframes float { 0% { transform: translateY(100vh) rotate(0deg); opacity: 1; } 100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; } }
         .progress-line { position: absolute; top: 0; left: 0; height: 5px; background: linear-gradient(to right, #FDA4AF, #FB7185); transition: width 0.4s ease; width: 0%; }
-        .content-area { padding: 1.5rem; padding-top: 1rem; min-height: 320px; display: flex; flex-direction: column; justify-content: center; }
-
+        .content-area { padding: 1.5rem; padding-top: 1rem; min-height: 320px; display: flex; flex-direction: column; justify-content: center; position: relative; z-index: 10; }
         .fade-in { animation: fadeIn 0.5s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-
         .dot { height: 6px; width: 6px; background: #FB7185; border-radius: 50%; display: inline-block; animation: bounce 1.4s infinite ease; margin: 0 2px; }
         @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
-
         #no-btn { transition: all 0.15s ease-out; position: absolute; white-space: nowrap; z-index: 100; }
         .grand-glow { animation: glow 2s infinite; }
         @keyframes glow { 0%, 100% { text-shadow: 0 0 10px #FB7185; } 50% { text-shadow: 0 0 30px #F43F5E; } }
     </style>
 </head>
-<body>
+<body onload="init()">
 
     <div class="glass" id="main-card">
         <div id="bar" class="progress-line"></div>
-
         <div class="content-area" id="box">
             <div id="step-start" class="text-center fade-in">
                 <div class="text-5xl mb-4">🥰</div>
                 <h1 class="text-4xl font-bold text-rose-600 mb-2 handwritten">Hey Baby...</h1>
-                <p class="text-gray-600 mb-8 text-sm px-4">I was thinking about you (as usual). I have a few "important" things to ask you... 😉</p>
+                <p class="text-gray-600 mb-8 text-sm px-4">I was thinking about you. I have a few "important" things to ask you... 😉</p>
                 <button onclick="start()" class="bg-rose-500 hover:bg-rose-600 text-white w-full py-4 rounded-2xl font-bold shadow-lg transform hover:scale-105 active:scale-95 transition">
                     Come here, Baby ❤️
                 </button>
@@ -54,7 +51,6 @@
                 <div class="text-6xl mb-4 animate-bounce">💍</div>
                 <h1 class="text-4xl font-bold text-rose-600 mb-2 handwritten grand-glow">Will you be my Valentine, Baby?</h1>
                 <p class="text-gray-500 text-sm mb-12 italic">You're my favorite headache. ❤️</p>
-
                 <div class="relative h-24 flex justify-center items-center gap-6" id="final-actions">
                     <button onclick="celebrate()" class="bg-rose-500 text-white px-12 py-4 rounded-full font-bold shadow-[0_10px_30px_rgba(244,63,94,0.4)] z-50 text-xl transform hover:scale-110 active:scale-90 transition">
                         YES!
@@ -68,11 +64,23 @@
     </div>
 
     <script>
-        let curr = 0;
-        let userAnswers = [];
-        const myNumber = "917756970876";
+        var curr = 0;
+        var ringAudio = new Audio('https://assets.mixkit.co/active_storage/sfx/1360/1360-preview.mp3');
 
-        const questions = [
+        function init() {
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+            for(var i=0; i<15; i++) {
+                var heart = document.createElement('div');
+                heart.className = 'heart-bg';
+                heart.innerHTML = '❤️';
+                heart.style.left = Math.random() * 100 + 'vw';
+                heart.style.animationDelay = Math.random() * 5 + 's';
+                heart.style.fontSize = (Math.random() * 20 + 10) + 'px';
+                document.body.appendChild(heart);
+            }
+        }
+
+        var questions = [
             { q: "If we were alone right now, what would you want me to do to you? 💕", opts: ["Give me the tightest hug", "Kiss me", "Cuddle until we sleep", "Something naughty..."] },
             { q: "Which nickname makes you blush the most? ❤️", opts: ["Baby", "Laado", "Shonu", "Pillu"] },
             { q: "Where is the best place for me to kiss you? 😘", opts: ["Forehead", "Neck", "Lips", "Everywhere!"] },
@@ -88,36 +96,22 @@
         }
 
         function load() {
-            const q = questions[curr];
-            const area = document.getElementById('ans-area');
-            const qContent = document.getElementById('q-content');
-
+            var q = questions[curr];
+            var area = document.getElementById('ans-area');
+            var qContent = document.getElementById('q-content');
             qContent.classList.remove('hidden');
             document.getElementById('q-text').innerText = q.q;
             area.innerHTML = '';
             document.getElementById('cheeky-msg').innerText = "";
 
             if (q.type === 'slider') {
-                area.innerHTML = `
-                    <div class="py-8">
-                        <input type="range" id="slid" min="1" max="10" value="10"
-                            oninput="checkSlider(this)"
-                            class="w-full h-3 bg-rose-100 rounded-lg appearance-none accent-rose-500 cursor-pointer">
-                        <div class="flex justify-between text-[10px] font-bold text-rose-300 mt-2 uppercase tracking-widest px-1">
-                            <span>Maybe a little</span>
-                            <span>I'm starving!</span>
-                        </div>
-                    </div>
-                    <button onclick="saveAnswer('10/10 - Starving for it!')" class="w-full bg-rose-500 text-white py-4 rounded-2xl font-bold shadow-lg transition active:scale-95">
-                        Confirm Kisses 🔥
-                    </button>
-                `;
+                area.innerHTML = '<div class="py-8"><input type="range" id="slid" min="1" max="10" value="10" oninput="checkSlider(this)" class="w-full h-3 bg-rose-100 rounded-lg appearance-none accent-rose-500 cursor-pointer"><div class="flex justify-between text-[10px] font-bold text-rose-300 mt-2 uppercase px-1"><span>Maybe a little</span><span>I\'m starving!</span></div></div><button onclick="next()" class="w-full bg-rose-500 text-white py-4 rounded-2xl font-bold shadow-lg transition active:scale-95">Confirm Kisses 🔥</button>';
             } else {
-                q.opts.forEach(o => {
-                    const b = document.createElement('button');
+                q.opts.forEach(function(o) {
+                    var b = document.createElement('button');
                     b.className = "w-full p-4 bg-white border border-rose-100 rounded-2xl hover:bg-rose-50 hover:border-rose-300 transition-all font-semibold text-gray-700 text-sm shadow-sm active:scale-95";
                     b.innerText = o;
-                    b.onclick = () => saveAnswer(o);
+                    b.onclick = function() { next(); };
                     area.appendChild(b);
                 });
             }
@@ -125,23 +119,17 @@
         }
 
         function checkSlider(el) {
-            const msg = document.getElementById('cheeky-msg');
+            var msg = document.getElementById('cheeky-msg');
             if (el.value < 8) {
                 msg.innerText = "Nice try, Baby! It stays at 10. 😉";
-                setTimeout(() => { el.value = 10; }, 300);
+                setTimeout(function() { el.value = 10; }, 300);
             }
-        }
-
-        function saveAnswer(answer) {
-            userAnswers.push(`*${questions[curr].q}*\nAnswer: _${answer}_`);
-            next();
         }
 
         function next() {
             document.getElementById('q-content').classList.add('hidden');
             document.getElementById('typing-ui').classList.remove('hidden');
-
-            setTimeout(() => {
+            setTimeout(function() {
                 document.getElementById('typing-ui').classList.add('hidden');
                 curr++;
                 if (curr < questions.length) load();
@@ -156,37 +144,28 @@
         }
 
         function dodge() {
-            const b = document.getElementById('no-btn');
-            const x = Math.random() * 200 - 100;
-            const y = Math.random() * 160 - 80;
-            b.style.transform = `translate(${x}px, ${y}px)`;
-            b.innerText = "Try again! 😂";
+            var b = document.getElementById('no-btn');
+            b.style.transform = 'translate(' + (Math.random() * 200 - 100) + 'px, ' + (Math.random() * 160 - 80) + 'px)';
+            b.innerText = "Wrong way! 😂";
         }
 
         function celebrate() {
-            const summary = userAnswers.join('\n\n');
-            const finalMsg = encodeURIComponent(`I said YES! ❤️💍\n\nHere are my answers for you, Pillu:\n\n${summary}`);
-            const whatsappLink = `https://wa.me/${myNumber}?text=${finalMsg}`;
-
-            const duration = 15 * 1000;
-            const animationEnd = Date.now() + duration;
-            const interval = setInterval(function() {
-              const timeLeft = animationEnd - Date.now();
-              if (timeLeft <= 0) return clearInterval(interval);
-              confetti({particleCount: 40, spread: 60, origin: { x: Math.random(), y: Math.random() - 0.2 }});
+            var duration = 15 * 1000;
+            var animationEnd = Date.now() + duration;
+            var interval = setInterval(function() {
+                if (Date.now() > animationEnd) return clearInterval(interval);
+                confetti({particleCount: 40, spread: 60, origin: { x: Math.random(), y: Math.random() - 0.2 }});
             }, 250);
 
-            document.getElementById('box').innerHTML = `
-                <div class="text-center py-6 fade-in">
-                    <div class="text-7xl mb-6">👑</div>
-                    <h2 class="text-4xl font-bold text-rose-600 handwritten mb-4">You're Mine!</h2>
-                    <p class="text-gray-700 text-sm mb-6 italic px-2">I've captured all your answers... send them to me now! 😉</p>
-                    <a href="${whatsappLink}" target="_blank" class="inline-block bg-green-500 text-white px-8 py-4 rounded-full font-bold shadow-lg animate-bounce transform hover:scale-110">
-                        Send to my Pillu 📞
-                    </a>
-                    <p class="text-rose-400 font-bold uppercase tracking-widest text-[10px] mt-8">I love you, Baby. Forever. ❤️</p>
-                </div>
-            `;
+            var finalHTML = '<div class="text-center py-6 fade-in">' +
+                '<div class="text-7xl mb-6">👑</div>' +
+                '<h2 class="text-4xl font-bold text-rose-600 handwritten mb-4">You\'re Mine!</h2>' +
+                '<p class="text-gray-700 text-sm mb-8 italic px-2">I knew you\'d say yes! Now call your Pillu and tell me how much you love me... 😉</p>' +
+                '<a href="tel:+917756970876" onclick="ringAudio.play()" class="inline-flex items-center justify-center gap-3 bg-green-500 text-white px-10 py-5 rounded-full font-bold text-xl shadow-[0_10px_30px_rgba(34,197,94,0.4)] animate-bounce transform hover:scale-110">' +
+                '<span>Call your Boo</span> 📞</a>' +
+                '<p class="text-rose-400 font-bold uppercase tracking-widest text-[10px] mt-10">Waiting for your call, Baby. ❤️</p></div>';
+
+            document.getElementById('box').innerHTML = finalHTML;
         }
     </script>
 </body>
